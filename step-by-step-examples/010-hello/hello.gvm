@@ -1,0 +1,8 @@
+**** #<primitive | hello.o1|> =
+#line 1 "/home/olpa/p/scheme/schemevs/step-by-step-examples/010-hello/hello.ss"
+#1 0 entry-point 0 ()                       ; +0=#
+  +1 = '"Hello, World!\n"                   ; +0=# +1=.
+  jump* 0 #2                                ; +0=# +1=.
+#2 0                                        ; +0=# +1=.
+  jump$ 0 display 1                         ; +0=# +1=.
+
