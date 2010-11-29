@@ -1,0 +1,42 @@
+PHP backend for Gambit Scheme
+
+A source code of Gambit Scheme is required.
+
+Preparation:
+export GAMBIT_SOURCE=....
+cd $GAMBIT_SOURCE/gsc
+ln -s $SCHEMEVM/gambit-php/_t-php.scm _t-php.scm
+
+Compilation:
+$ $GAMBIT_SOURCE/gsc/gsc
+> (load (string-append (getenv "GAMBIT_SOURCE") "/gsc/_t-php.scm"))
+> (c#cf "/home/olpa/p/scheme/schemevs/step-by-step-examples/010-hello/hello.ss" 'php '() #f #f)
+
+--
+
+Original message:
+
+From: Marc Feeley <feeley iro umontreal ca>
+Newsgroups: gmane.lisp.scheme.gambit
+Subject: Re: A register is not initialized in gvm code?
+Date: Tue, 23 Nov 2010 09:35:29 -0500
+
+...
+
+> At the first time, I'll need to experiment, but the cycle (change code,
+> re-compile gsc, install it, run the new gsc) is a bit long. Is there a
+> possibility to avoid re-compilation and immediately run the new code?
+
+Absolutely!  You can interpret the code you are developing and hook it into the compiler (so that the compiler is calling your interpreted code).  It is all transparent (the compiler, which is compiled Scheme code, can call interpreted Scheme code, and vice-versa).  Here's a sample interaction from within the gsc/ subdirectory:
+
+% gsc
+Gambit v4.6.0
+
+> (load "_t-univ.scm")
+"/Users/feeley/gambit/gsc/_t-univ.scm"
+> (c#cf "fib.scm" 'php '() #f #f)
+...
+
+The (load "_t-univ.scm") installs a target for php.  Note that I am calling c#cf (the compiler's internal "compile-file" function) directly so that the target (i.e. php) can be chosen explicitly.  See the top of the file gsc/_front.scm for documentation on c#cf's parameters.
+
+If you modify _t-univ.scm you can either reload the file, or send to the REPL the function definition that you modified (this can be done with a cut-and-paste, or even better, from within emacs with C-x C-e if your cursor is just after the code to send to the REPL, and you are running gsi as a subprocess, with C-u M-x run-scheme).
