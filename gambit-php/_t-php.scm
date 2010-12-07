@@ -191,8 +191,65 @@
     (else
      (error "Unsupported target language" (target-name targ)))))
 
+(define port)
+
 (define (php-dump targ procs output output-root c-intf script-line options)
-  (virtual.dump procs (current-output-port)) ;; just dump the GVM code for now
+  ;(virtual.dump procs (current-output-port)) ;; just dump the GVM code for now
+  ;(for-each (lambda (proc) (scan-opnd (make-obj proc))) procs)
+  (set! port (current-output-port))
+  (for-each dump-proc procs)
   #f)
+
+(define (dump-proc proc)
+  (if (proc-obj-primitive? proc)
+    (display "**** #<primitive " port)
+    (display "**** #<procedure " port))
+  (write (string->canonical-symbol (proc-obj-name proc)) port)
+  (display "> =" port)
+  (newline port)
+
+  (let ((x (proc-obj-code proc)))
+    (if (bbs? x)
+      (dump-bbs x)
+      (display "No, not a bbs\n")))
+  )
+
+(define (dump-bbs bbs)
+  (bbs-for-each-bb dump-bb bbs))
+
+(define (dump-bb bb)
+  (display "bb inside\n")
+  (dump-instr (bb-label-instr bb))
+  (for-each dump-instr (bb-non-branch-instrs bb))
+  (dump-instr (bb-branch-instr bb))
+  )
+
+(define (dump-instr instr)
+  (display "instr inside: ")
+  ((case (gvm-instr-type instr)
+     ((label) dump-instr-label)
+     ((copy)  dump-instr-copy)
+     (else     dump-instr-unknown))  instr)
+  )
+
+(define (dump-instr-unknown instr)
+  (display "unknown instruction of type: ")
+  (display (gvm-instr-type instr))
+  (newline))
+
+(define (dump-instr-label instr)
+  (display "label instr #")
+  (display (label-lbl-num instr))
+  (display ", of type ")
+  (display (label-type instr))
+  (newline)
+  )
+
+(define (dump-instr-copy instr)
+  (display "copy instr, operand: ")
+  (display (copy-opnd instr))
+  (display ", location: ")
+  (display (copy-loc instr))
+  (newline))
 
 ;;;============================================================================
