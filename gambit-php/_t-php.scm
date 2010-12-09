@@ -246,10 +246,19 @@
   )
 
 (define (php-dump-instr-copy instr)
-  (display "copy instr, operand: ")
-  (display (copy-opnd instr))
-  (display ", location: ")
-  (display (copy-loc instr))
-  (newline))
+  (php-dump-loc (copy-loc instr))
+  (display " = ")
+  (php-dump-loc (copy-opnd instr))
+  (display ";\n"))
+
+(define (php-dump-loc loc)
+  (cond
+    ((reg? loc) (display "$reg")(display (reg-num loc)))
+    ((obj? loc) (php-dump-scheme-object (obj-val loc)))
+    (else       (display "loc#")(display loc)))
+  (display " "))
+
+(define (php-dump-scheme-object obj)
+  (write obj))
 
 ;;;============================================================================
