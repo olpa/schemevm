@@ -197,15 +197,17 @@
   ;(virtual.dump procs (current-output-port)) ;; just dump the GVM code for now
   ;(for-each (lambda (proc) (scan-opnd (make-obj proc))) procs)
   (set! port (current-output-port))
+  (display "<?php\ninclude '../support/runtime.v1.php';\n\n")
   (for-each php-dump-proc procs)
+  (display "\nexec_scheme_code($lbl_1);\n?>\n")
   #f)
 
 (define (php-dump-proc proc)
   (if (proc-obj-primitive? proc)
-    (display "**** #<primitive " port)
-    (display "**** #<procedure " port))
-  (write (string->canonical-symbol (proc-obj-name proc)) port)
-  (display "> =" port)
+    (display "// primitive ")
+    (display "// procedure "))
+  (write (string->canonical-symbol (proc-obj-name proc)))
+  (display " =")
   (newline port)
 
   (let ((x (proc-obj-code proc)))
@@ -218,17 +220,17 @@
   (bbs-for-each-bb php-dump-bb bbs))
 
 (define (php-dump-bb bb)
-  (display "bb inside\n")
-  (php-dump-instr (bb-label-instr bb))
+  (php-dump-instr-label (bb-label-instr bb))
   (for-each php-dump-instr (bb-non-branch-instrs bb))
   (php-dump-instr (bb-branch-instr bb))
+  (php-dump-instr-label-close (bb-label-instr bb))
   )
 
 (define (php-dump-instr instr)
-  (display "instr inside: ")
   ((case (gvm-instr-type instr)
      ((label) php-dump-instr-label)
      ((copy)  php-dump-instr-copy)
+     ((jump)  php-dump-instr-jump)
      (else    php-dump-instr-unknown))  instr)
   )
 
@@ -238,12 +240,19 @@
   (newline))
 
 (define (php-dump-instr-label instr)
-  (display "label instr #")
+  (display "function lbl_")
   (display (label-lbl-num instr))
-  (display ", of type ")
-  (display (label-type instr))
-  (newline)
+  (display "() {\n")
   )
+
+(define (php-dump-instr-label-close instr)
+  (let ([lbl-num (label-lbl-num instr)])
+    (display "}\n$lbl_")
+    (display lbl-num)
+    (display "='lbl_")
+    (display lbl-num)
+    (display "';\n")
+  ))
 
 (define (php-dump-instr-copy instr)
   (php-dump-loc (copy-loc instr))
@@ -255,10 +264,17 @@
   (cond
     ((reg? loc) (display "$reg")(display (reg-num loc)))
     ((obj? loc) (php-dump-scheme-object (obj-val loc)))
+    ((glo? loc) (display "$glo_")(display (glo-name loc)))
+    ((lbl? loc) (display "$lbl_")(display (lbl-num loc)))
     (else       (display "loc#")(display loc)))
   (display " "))
 
 (define (php-dump-scheme-object obj)
   (write obj))
+
+(define (php-dump-instr-jump instr)
+  (display "$pc = ")
+  (php-dump-loc (jump-opnd instr))
+  (display ";\n"))
 
 ;;;============================================================================
