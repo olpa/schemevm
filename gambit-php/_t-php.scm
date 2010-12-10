@@ -199,7 +199,7 @@
   (set! port (current-output-port))
   (display "<?php\ninclude '../support/runtime.v1.php';\n\n")
   (for-each php-dump-proc procs)
-  (display "\nexec_scheme_code($lbl_1);\n?>\n")
+  (display "\nexec_scheme_code('lbl_1');\n?>\n")
   #f)
 
 (define (php-dump-proc proc)
@@ -221,10 +221,14 @@
 
 (define (php-dump-bb bb)
   (php-dump-instr-label (bb-label-instr bb))
-  (for-each php-dump-instr (bb-non-branch-instrs bb))
-  (php-dump-instr (bb-branch-instr bb))
-  (php-dump-instr-label-close (bb-label-instr bb))
-  )
+  (let* ([vars-used  '()]
+         [s-body     (with-output-to-string '() (lambda ()
+           (for-each php-dump-instr (bb-non-branch-instrs bb))
+           (php-dump-instr (bb-branch-instr bb))
+           (php-dump-instr-label-close (bb-label-instr bb))))])
+    (display "global $reg0, $reg1, $reg2, $reg3, $pc;\n")
+    (display s-body)
+  ))
 
 (define (php-dump-instr instr)
   ((case (gvm-instr-type instr)
@@ -247,11 +251,7 @@
 
 (define (php-dump-instr-label-close instr)
   (let ([lbl-num (label-lbl-num instr)])
-    (display "}\n$lbl_")
-    (display lbl-num)
-    (display "='lbl_")
-    (display lbl-num)
-    (display "';\n")
+    (display "}\n")
   ))
 
 (define (php-dump-instr-copy instr)
@@ -264,8 +264,8 @@
   (cond
     ((reg? loc) (display "$reg")(display (reg-num loc)))
     ((obj? loc) (php-dump-scheme-object (obj-val loc)))
-    ((glo? loc) (display "$glo_")(display (glo-name loc)))
-    ((lbl? loc) (display "$lbl_")(display (lbl-num loc)))
+    ((glo? loc) (display "'glo_")(display (glo-name loc))(display "'"))
+    ((lbl? loc) (display "'lbl_")(display (lbl-num loc))(display "'"))
     (else       (display "loc#")(display loc)))
   (display " "))
 

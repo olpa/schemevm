@@ -3,14 +3,14 @@ include '../support/runtime.v1.php';
 
 // primitive | hello| =
 function lbl_1() {
+global $reg0, $reg1, $reg2, $reg3, $pc;
 $reg1  = "Hello, World!\n" ;
-$pc = $lbl_2 ;
+$pc = 'lbl_2' ;
 }
-$lbl_1='lbl_1';
 function lbl_2() {
-$pc = $glo_display ;
+global $reg0, $reg1, $reg2, $reg3, $pc;
+$pc = 'glo_display' ;
 }
-$lbl_2='lbl_2';
 
-exec_scheme_code($lbl_1);
+exec_scheme_code('lbl_1');
 ?>
