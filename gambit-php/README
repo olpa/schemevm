@@ -10,7 +10,7 @@ ln -s $SCHEMEVM/gambit-php/_t-php.scm _t-php.scm
 Compilation:
 $ $GAMBIT_SOURCE/gsc/gsc
 > (load (string-append (getenv "GAMBIT_SOURCE") "/gsc/_t-php.scm"))
-> (c#cf "/home/olpa/p/scheme/schemevs/step-by-step-examples/010-hello/hello.ss" 'php '() #f #f)
+> (c#cf "/home/olpa/p/scheme/schemevm/step-by-step-examples/010-hello/hello.ss" 'php '() #f #f)
 
 --
 
