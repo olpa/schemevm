@@ -222,11 +222,14 @@
 (define (php-dump-bb bb)
   (php-dump-instr-label (bb-label-instr bb))
   (let* ([vars-used  '()]
-         [s-body     (with-output-to-string '() (lambda ()
+         [s-body     (
+                      with-output-to-string '()
+                      ;with-output-to-port (current-output-port)
+                      (lambda ()
            (for-each php-dump-instr (bb-non-branch-instrs bb))
            (php-dump-instr (bb-branch-instr bb))
            (php-dump-instr-label-close (bb-label-instr bb))))])
-    (display "global $reg0, $reg1, $reg2, $reg3, $pc;\n")
+    (display "global $reg0, $reg1, $reg2, $reg3, $pc, $fp, $stack;\n")
     (display s-body)
   ))
 
@@ -255,14 +258,18 @@
   ))
 
 (define (php-dump-instr-copy instr)
-  (php-dump-loc (copy-loc instr))
-  (display " = ")
-  (php-dump-loc (copy-opnd instr))
-  (display ";\n"))
+  (let ([copy-opnd (copy-opnd instr)])
+    (if copy-opnd
+      (begin
+        (php-dump-loc (copy-loc instr))
+        (display " = ")
+        (php-dump-loc copy-opnd)
+        (display ";\n")))))
 
 (define (php-dump-loc loc)
   (cond
     ((reg? loc) (display "$reg")(display (reg-num loc)))
+    ((stk? loc) (display "$stack[$fp+")(display (stk-num loc))(display "]"))
     ((obj? loc) (php-dump-scheme-object (obj-val loc)))
     ((glo? loc) (display "'glo_")(display (glo-name loc))(display "'"))
     ((lbl? loc) (display "'lbl_")(display (lbl-num loc))(display "'"))
