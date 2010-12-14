@@ -217,29 +217,36 @@
   )
 
 (define (php-dump-bbs bbs)
-  (bbs-for-each-bb php-dump-bb bbs))
+  (bbs-for-each-bb (get-php-dump-bb) bbs))
 
-(define (php-dump-bb bb)
-  (php-dump-instr-label (bb-label-instr bb))
-  (let* ([vars-used  '()]
-         [s-body     (
-                      with-output-to-string '()
-                      ;with-output-to-port (current-output-port)
-                      (lambda ()
-           (for-each php-dump-instr (bb-non-branch-instrs bb))
-           (php-dump-instr (bb-branch-instr bb))
-           (php-dump-instr-label-close (bb-label-instr bb))))])
-    (display "global $reg0, $reg1, $reg2, $reg3, $pc, $fp, $stack;\n")
-    (display s-body)
+(define (get-php-dump-bb)
+  (let ([fp-offset 0])
+    (lambda (bb)
+      (php-dump-instr-label (bb-label-instr bb))
+      (display "global $reg0, $reg1, $reg2, $reg3, $pc, $fp, $stack;\n")
+      (for-each
+        (lambda (bb) (php-dump-instr bb fp-offset))
+        (bb-non-branch-instrs bb))
+      (php-dump-instr (bb-branch-instr bb) fp-offset)
+      (php-dump-instr-label-close (bb-label-instr bb))
+      ;(display "// label/jump numbers: ")
+      ;(display (label-entry-nb-parms (bb-label-instr bb)))
+      ;(display (frame-size (gvm-instr-frame (bb-label-instr bb))))
+      ;(display ", ")
+      ;(display (frame-size (gvm-instr-frame (bb-branch-instr bb))))
+      ;(for-each (lambda (x) (write-substring x 0 80))
+      ;          (vector->list (bb-branch-instr bb)))
+      ;(newline)
   ))
+)
 
-(define (php-dump-instr instr)
-  ((case (gvm-instr-type instr)
-     ((label) php-dump-instr-label)
-     ((copy)  php-dump-instr-copy)
-     ((jump)  php-dump-instr-jump)
-     (else    php-dump-instr-unknown))  instr)
-  )
+(define (php-dump-instr instr fp-offset)
+  (let ([instr-type (gvm-instr-type instr)])
+    (cond
+      ((eq? instr-type 'label) (php-dump-instr-label   instr))
+      ((eq? instr-type 'copy)  (php-dump-instr-copy    instr fp-offset))
+      ((eq? instr-type 'jump)  (php-dump-instr-jump    instr fp-offset))
+      (else                    (php-dump-instr-unknown instr)))))
 
 (define (php-dump-instr-unknown instr)
   (display "unknown instruction of type: ")
@@ -257,16 +264,16 @@
     (display "}\n")
   ))
 
-(define (php-dump-instr-copy instr)
+(define (php-dump-instr-copy instr fp-offset)
   (let ([copy-opnd (copy-opnd instr)])
     (if copy-opnd
       (begin
-        (php-dump-loc (copy-loc instr))
+        (php-dump-loc (copy-loc instr) fp-offset)
         (display " = ")
-        (php-dump-loc copy-opnd)
+        (php-dump-loc copy-opnd fp-offset)
         (display ";\n")))))
 
-(define (php-dump-loc loc)
+(define (php-dump-loc loc fp-offset)
   (cond
     ((reg? loc) (display "$reg")(display (reg-num loc)))
     ((stk? loc) (display "$stack[$fp+")(display (stk-num loc))(display "]"))
@@ -279,9 +286,9 @@
 (define (php-dump-scheme-object obj)
   (write obj))
 
-(define (php-dump-instr-jump instr)
+(define (php-dump-instr-jump instr fp-offset)
   (display "$pc = ")
-  (php-dump-loc (jump-opnd instr))
+  (php-dump-loc (jump-opnd instr) fp-offset)
   (display ";\n"))
 
 ;;;============================================================================
