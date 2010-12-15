@@ -193,6 +193,29 @@
 
 (define port)
 
+(define (scan-opnd gvm-opnd)
+  (cond
+    [(not gvm-opnd)
+               (display "scan-opnd, not\n")
+     ]
+    [(obj? gvm-opnd)
+               ;(reachable (lbl-num->bb (lbl-num gvm-opnd) bbs) bb)
+               (display "scan-opnd, obj\n")
+               (scan-obj (obj-val gvm-opnd))
+               ]
+    [(clo? gvm-opnd)
+               (display "scan-opnd, clo\n")
+               (scan-opnd (clo-base gvm-opnd))
+               ]
+    [else (display "scan-opnd, something else\n")]
+  ))
+
+(define (find-all-the-code procs)
+  ;(display "#procs: ")(display (length procs))(newline)
+  ;(for-each (lambda (proc) (scan-opnd (make-obj proc))) procs)
+  #t
+  )
+
 (define (php-dump targ procs output output-root c-intf script-line options)
   ;(virtual.dump procs (current-output-port)) ;; just dump the GVM code for now
   ;(for-each (lambda (proc) (scan-opnd (make-obj proc))) procs)
@@ -200,6 +223,7 @@
   (display "<?php\ninclude '../support/runtime.v1.php';\n\n")
   (for-each php-dump-proc procs)
   (display "\nexec_scheme_code('lbl_1');\n?>\n")
+  (find-all-the-code procs)
   #f)
 
 (define (php-dump-proc proc)
@@ -292,7 +316,13 @@
   (display " "))
 
 (define (php-dump-scheme-object obj)
-  (write obj))
+  (if (proc-obj? obj)
+    (begin (display "'glo_")(display (proc-obj-name obj))(display "'")
+           (display "\n!!!!!!!!!!!!! Just test!\n\n\n")
+           (php-dump-proc obj)
+           (display "!!!!!!!!!!!!! End of: Just test!\n\n\n")
+           )
+    (write obj)))
 
 (define (php-dump-instr-jump instr fp-offset)
   (display "$pc = ")
