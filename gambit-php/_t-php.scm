@@ -193,6 +193,9 @@
 
 (define port)
 
+(define (proc-obj-c-name-set! obj name)
+  (vector-set! obj 2 name))
+
 ; The argument "procs" of "univ-dump" does not contain all the
 ; procedures. Instead, some of them are connected to arguments
 ; of GVM instructions. In other words, while generating code for
@@ -206,7 +209,9 @@
            (not (memq obj (queue->list proc-seen))))
     (begin
       (queue-put! proc-seen obj)
-      (queue-put! proc-left obj))))
+      (queue-put! proc-left obj)
+      (proc-obj-c-name-set! obj (mangle-name (proc-obj-name obj)))
+      )))
 
 ; Auxiliary information while dumping a procedure
 (define (make-dump-baton proc)
@@ -217,6 +222,21 @@
   (vector-ref baton 1))
 (define (set-dump-fp-offset! baton val)
   (vector-set! baton 1 val))
+
+; name mangling to create valid c/php identifiers
+(define (mangle-name name)
+  (letrec (
+      [mangle-rec (lambda (chars)
+        (if (null? chars)
+          '()
+          (let ([ch   (car chars)]
+                [rest (cdr chars)])
+            (if (or (char-alphabetic? ch) (char-numeric? ch) )
+              (cons ch (mangle-rec rest))
+              (append '(#\x)
+                      (string->list (number->string (char->integer ch) 16))
+                      (mangle-rec rest))))))])
+    (list->string (mangle-rec (string->list name)))))
 
 ;
 ; php-dump
@@ -231,14 +251,16 @@
       (begin
         (php-dump-proc (queue-get! proc-left))
         (loop))))
-  (display "\nexec_scheme_code('lbl_1');\n?>\n")
+  (display "\nexec_scheme_code('")
+  (php-dump-label-name 1 (make-dump-baton (car procs)))
+  (display "');\n?>\n")
   #f)
 
 (define (php-dump-proc proc)
   (if (proc-obj-primitive? proc)
     (display "// primitive ")
     (display "// procedure "))
-  (write (string->canonical-symbol (proc-obj-name proc)))
+  (write (string->canonical-symbol (proc-obj-c-name proc)))
   (display " =")
   (newline port)
 
@@ -252,7 +274,7 @@
   (bbs-for-each-bb (lambda (bb) (php-dump-bb bb baton)) bbs))
 
 (define (php-dump-bb bb baton)
-  (php-dump-instr-label (bb-label-instr bb))
+  (php-dump-instr-label (bb-label-instr bb) baton)
   (display "global $reg0, $reg1, $reg2, $reg3, $pc, $fp, $stack;\n")
   (for-each
     (lambda (bb) (php-dump-instr bb baton))
@@ -279,7 +301,7 @@
 (define (php-dump-instr instr baton)
   (let ([instr-type (gvm-instr-type instr)])
     (cond
-      ((eq? instr-type 'label) (php-dump-instr-label   instr))
+      ((eq? instr-type 'label) (php-dump-instr-label   instr baton))
       ((eq? instr-type 'copy)  (php-dump-instr-copy    instr baton))
       ((eq? instr-type 'jump)  (php-dump-instr-jump    instr baton))
       (else                    (php-dump-instr-unknown instr)))))
@@ -289,9 +311,9 @@
   (display (gvm-instr-type instr))
   (newline))
 
-(define (php-dump-instr-label instr)
-  (display "function lbl_")
-  (display (label-lbl-num instr))
+(define (php-dump-instr-label instr baton)
+  (display "function ")
+  (php-dump-label-name (label-lbl-num instr) baton)
   (display "() {\n")
   )
 
@@ -309,22 +331,30 @@
         (php-dump-loc copy-opnd baton)
         (display ";\n")))))
 
+(define (php-dump-label-name num baton)
+  (display "lbl_")
+  (display (proc-obj-c-name (get-dump-proc baton)))
+  (display "_")
+  (display num))
+
 (define (php-dump-loc loc baton)
   (cond
-    ((reg? loc) (display "$reg")(display (reg-num loc)))
-    ((stk? loc) (display "$stack[$fp")
+    [(reg? loc) (display "$reg")(display (reg-num loc))]
+    [(stk? loc) (display "$stack[$fp")
                 (display-with-plus-or-minus
                   (- (stk-num loc) (get-dump-fp-offset baton)))
-                (display "]"))
-    ((obj? loc) (php-dump-scheme-object (obj-val loc)))
-    ((glo? loc) (display "'glo_")(display (glo-name loc))(display "'"))
-    ((lbl? loc) (display "'lbl_")(display (lbl-num loc))(display "'"))
-    (else       (display "loc#")(display loc)))
+                (display "]")]
+    [(obj? loc) (php-dump-scheme-object (obj-val loc))]
+    [(glo? loc) (display "'glo_")(display (glo-name loc))(display "'")]
+    [(lbl? loc) (display "'")
+                (php-dump-label-name (lbl-num loc) baton)
+                (display "'")]
+    [else       (display "loc#")(display loc)])
   (display " "))
 
 (define (php-dump-scheme-object obj)
   (if (proc-obj? obj)
-    (begin (display "'glo_")(display (proc-obj-name obj))(display "'")
+    (begin (display "'glo_")(display (proc-obj-c-name obj))(display "'")
            (scan-obj obj)
            )
     (write obj)))
