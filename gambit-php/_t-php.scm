@@ -201,7 +201,6 @@
 (define proc-seen (queue-empty))
 (define proc-left (queue-empty))
 (define (scan-obj obj)
-
   (if (and (proc-obj? obj)
            (proc-obj-code obj)
            (not (memq obj (queue->list proc-seen))))
@@ -209,20 +208,30 @@
       (queue-put! proc-seen obj)
       (queue-put! proc-left obj))))
 
+; Auxiliary information while dumping a procedure
+(define (make-dump-baton proc)
+  (vector proc 0))
+(define (get-dump-proc baton)
+  (vector-ref baton 0))
+(define (get-dump-fp-offset baton)
+  (vector-ref baton 1))
+(define (set-dump-fp-offset! baton val)
+  (vector-set! baton 1 val))
+
+;
+; php-dump
+;
 (define (php-dump targ procs output output-root c-intf script-line options)
   ;(virtual.dump procs (current-output-port)) ;; just dump the GVM code for now
-  ;(for-each (lambda (proc) (scan-opnd (make-obj proc))) procs)
   (set! port (current-output-port))
   (display "<?php\ninclude '../support/runtime.v1.php';\n\n")
   (for-each (lambda (proc) (scan-obj proc)) procs)
   (let loop ()
     (if (not (queue-empty? proc-left))
       (begin
-        (display "!?!? ========== !!?!?!?!?!\n")
         (php-dump-proc (queue-get! proc-left))
         (loop))))
   (display "\nexec_scheme_code('lbl_1');\n?>\n")
-  ;(find-all-the-code procs)
   #f)
 
 (define (php-dump-proc proc)
@@ -235,33 +244,31 @@
 
   (let ((x (proc-obj-code proc)))
     (if (bbs? x)
-      (php-dump-bbs x)
+      (php-dump-bbs x (make-dump-baton proc))
       (display "No, not a bbs\n")))
   )
 
-(define (php-dump-bbs bbs)
-  (bbs-for-each-bb (get-php-dump-bb) bbs))
+(define (php-dump-bbs bbs baton)
+  (bbs-for-each-bb (lambda (bb) (php-dump-bb bb baton)) bbs))
 
-(define (get-php-dump-bb)
-  (let ([fp-offset 0])
-    (lambda (bb)
-      (php-dump-instr-label (bb-label-instr bb))
-      (display "global $reg0, $reg1, $reg2, $reg3, $pc, $fp, $stack;\n")
-      (for-each
-        (lambda (bb) (php-dump-instr bb fp-offset))
-        (bb-non-branch-instrs bb))
-      (php-dump-instr (bb-branch-instr bb) fp-offset)
-      (let ([frame-size-delta
-              (- (frame-size (gvm-instr-frame (bb-branch-instr bb)))
-                 (frame-size (gvm-instr-frame (bb-label-instr bb))))])
-        (if (not (= 0 frame-size-delta))
-          (begin
-            (display "$fp = $fp")
-            (display-with-plus-or-minus frame-size-delta)
-            (display ";\n")
-            (set! fp-offset (+ fp-offset frame-size-delta)))))
-      (php-dump-instr-label-close (bb-label-instr bb))
-  ))
+(define (php-dump-bb bb baton)
+  (php-dump-instr-label (bb-label-instr bb))
+  (display "global $reg0, $reg1, $reg2, $reg3, $pc, $fp, $stack;\n")
+  (for-each
+    (lambda (bb) (php-dump-instr bb baton))
+    (bb-non-branch-instrs bb))
+  (php-dump-instr (bb-branch-instr bb) baton)
+  (let ([frame-size-delta
+          (- (frame-size (gvm-instr-frame (bb-branch-instr bb)))
+             (frame-size (gvm-instr-frame (bb-label-instr bb))))])
+    (if (not (= 0 frame-size-delta))
+      (begin
+        (display "$fp = $fp")
+        (display-with-plus-or-minus frame-size-delta)
+        (display ";\n")
+        (set-dump-fp-offset! baton
+            (+ (get-dump-fp-offset baton) frame-size-delta)))))
+  (php-dump-instr-label-close (bb-label-instr bb))
 )
 
 (define (display-with-plus-or-minus num)
@@ -269,12 +276,12 @@
     (display num)
     (begin (display "+")(display num))))
 
-(define (php-dump-instr instr fp-offset)
+(define (php-dump-instr instr baton)
   (let ([instr-type (gvm-instr-type instr)])
     (cond
       ((eq? instr-type 'label) (php-dump-instr-label   instr))
-      ((eq? instr-type 'copy)  (php-dump-instr-copy    instr fp-offset))
-      ((eq? instr-type 'jump)  (php-dump-instr-jump    instr fp-offset))
+      ((eq? instr-type 'copy)  (php-dump-instr-copy    instr baton))
+      ((eq? instr-type 'jump)  (php-dump-instr-jump    instr baton))
       (else                    (php-dump-instr-unknown instr)))))
 
 (define (php-dump-instr-unknown instr)
@@ -293,20 +300,21 @@
     (display "}\n")
   ))
 
-(define (php-dump-instr-copy instr fp-offset)
+(define (php-dump-instr-copy instr baton)
   (let ([copy-opnd (copy-opnd instr)])
     (if copy-opnd
       (begin
-        (php-dump-loc (copy-loc instr) fp-offset)
+        (php-dump-loc (copy-loc instr) baton)
         (display " = ")
-        (php-dump-loc copy-opnd fp-offset)
+        (php-dump-loc copy-opnd baton)
         (display ";\n")))))
 
-(define (php-dump-loc loc fp-offset)
+(define (php-dump-loc loc baton)
   (cond
     ((reg? loc) (display "$reg")(display (reg-num loc)))
     ((stk? loc) (display "$stack[$fp")
-                (display-with-plus-or-minus (- (stk-num loc) fp-offset))
+                (display-with-plus-or-minus
+                  (- (stk-num loc) (get-dump-fp-offset baton)))
                 (display "]"))
     ((obj? loc) (php-dump-scheme-object (obj-val loc)))
     ((glo? loc) (display "'glo_")(display (glo-name loc))(display "'"))
@@ -321,9 +329,9 @@
            )
     (write obj)))
 
-(define (php-dump-instr-jump instr fp-offset)
+(define (php-dump-instr-jump instr baton)
   (display "$pc = ")
-  (php-dump-loc (jump-opnd instr) fp-offset)
+  (php-dump-loc (jump-opnd instr) baton)
   (display ";\n"))
 
 ;;;============================================================================
