@@ -193,37 +193,36 @@
 
 (define port)
 
-(define (scan-opnd gvm-opnd)
-  (cond
-    [(not gvm-opnd)
-               (display "scan-opnd, not\n")
-     ]
-    [(obj? gvm-opnd)
-               ;(reachable (lbl-num->bb (lbl-num gvm-opnd) bbs) bb)
-               (display "scan-opnd, obj\n")
-               (scan-obj (obj-val gvm-opnd))
-               ]
-    [(clo? gvm-opnd)
-               (display "scan-opnd, clo\n")
-               (scan-opnd (clo-base gvm-opnd))
-               ]
-    [else (display "scan-opnd, something else\n")]
-  ))
+; The argument "procs" of "univ-dump" does not contain all the
+; procedures. Instead, some of them are connected to arguments
+; of GVM instructions. In other words, while generating code for
+; a procedure we can find one more procedure, and generate code
+; for it later.
+(define proc-seen (queue-empty))
+(define proc-left (queue-empty))
+(define (scan-obj obj)
 
-(define (find-all-the-code procs)
-  ;(display "#procs: ")(display (length procs))(newline)
-  ;(for-each (lambda (proc) (scan-opnd (make-obj proc))) procs)
-  #t
-  )
+  (if (and (proc-obj? obj)
+           (proc-obj-code obj)
+           (not (memq obj (queue->list proc-seen))))
+    (begin
+      (queue-put! proc-seen obj)
+      (queue-put! proc-left obj))))
 
 (define (php-dump targ procs output output-root c-intf script-line options)
   ;(virtual.dump procs (current-output-port)) ;; just dump the GVM code for now
   ;(for-each (lambda (proc) (scan-opnd (make-obj proc))) procs)
   (set! port (current-output-port))
   (display "<?php\ninclude '../support/runtime.v1.php';\n\n")
-  (for-each php-dump-proc procs)
+  (for-each (lambda (proc) (scan-obj proc)) procs)
+  (let loop ()
+    (if (not (queue-empty? proc-left))
+      (begin
+        (display "!?!? ========== !!?!?!?!?!\n")
+        (php-dump-proc (queue-get! proc-left))
+        (loop))))
   (display "\nexec_scheme_code('lbl_1');\n?>\n")
-  (find-all-the-code procs)
+  ;(find-all-the-code procs)
   #f)
 
 (define (php-dump-proc proc)
@@ -318,9 +317,7 @@
 (define (php-dump-scheme-object obj)
   (if (proc-obj? obj)
     (begin (display "'glo_")(display (proc-obj-name obj))(display "'")
-           (display "\n!!!!!!!!!!!!! Just test!\n\n\n")
-           (php-dump-proc obj)
-           (display "!!!!!!!!!!!!! End of: Just test!\n\n\n")
+           (scan-obj obj)
            )
     (write obj)))
 
