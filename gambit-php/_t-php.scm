@@ -200,18 +200,20 @@
 ; procedures. Instead, some of them are connected to arguments
 ; of GVM instructions. In other words, while generating code for
 ; a procedure we can find one more procedure, and generate code
-; for it later.
+; for it later. Second side-effect: assign a C/PHP name
+; to procedures (and primitives).
 (define proc-seen (queue-empty))
 (define proc-left (queue-empty))
 (define (scan-obj obj)
+  (and (proc-obj? obj)
+       (not (proc-obj-c-name obj))
+       (proc-obj-c-name-set! obj (mangle-name (proc-obj-name obj))))
   (if (and (proc-obj? obj)
            (proc-obj-code obj)
            (not (memq obj (queue->list proc-seen))))
     (begin
       (queue-put! proc-seen obj)
-      (queue-put! proc-left obj)
-      (proc-obj-c-name-set! obj (mangle-name (proc-obj-name obj)))
-      )))
+      (queue-put! proc-left obj))))
 
 ; Auxiliary information while dumping a procedure
 (define (make-dump-baton proc)
@@ -354,9 +356,8 @@
 
 (define (php-dump-scheme-object obj)
   (if (proc-obj? obj)
-    (begin (display "'glo_")(display (proc-obj-c-name obj))(display "'")
-           (scan-obj obj)
-           )
+    (begin (scan-obj obj)
+           (display "'glo_")(display (proc-obj-c-name obj))(display "'"))
     (write obj)))
 
 (define (php-dump-instr-jump instr baton)
