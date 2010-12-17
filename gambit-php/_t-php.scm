@@ -303,10 +303,11 @@
 (define (php-dump-instr instr baton)
   (let ([instr-type (gvm-instr-type instr)])
     (cond
-      ((eq? instr-type 'label) (php-dump-instr-label   instr baton))
-      ((eq? instr-type 'copy)  (php-dump-instr-copy    instr baton))
-      ((eq? instr-type 'jump)  (php-dump-instr-jump    instr baton))
-      (else                    (php-dump-instr-unknown instr)))))
+      ((eq? instr-type 'label)  (php-dump-instr-label   instr baton))
+      ((eq? instr-type 'copy)   (php-dump-instr-copy    instr baton))
+      ((eq? instr-type 'jump)   (php-dump-instr-jump    instr baton))
+      ((eq? instr-type 'ifjump) (php-dump-instr-ifjump  instr baton))
+      (else                     (php-dump-instr-unknown instr)))))
 
 (define (php-dump-instr-unknown instr)
   (display "unknown instruction of type: ")
@@ -364,5 +365,30 @@
   (display "$pc = ")
   (php-dump-loc (jump-opnd instr) baton)
   (display ";\n"))
+
+(define (php-dump-instr-ifjump instr baton)
+  (display "$f=")(php-dump-scheme-object (ifjump-test instr))
+  (display ";\nif($f(")
+  (let loop (
+             [comma ""]
+             [opnds (ifjump-opnds instr)])
+    (or (null? opnds)
+        (begin
+          (display comma)
+          (php-dump-loc (car opnds) baton)
+          (loop ", " (cdr opnds)))))
+  (display ")) {")
+  (let ((print-jump-loc (lambda (loc)
+                (and loc (begin
+                    (display " $pc=")
+                    (php-dump-label-name loc baton)
+                    (display ";"))))))
+    (print-jump-loc (ifjump-true instr))
+    (let ((false-loc (ifjump-false instr)))
+      (if false-loc (begin
+          (display " } else {")
+          (print-jump-loc false-loc)))))
+  (display " }\n")
+)
 
 ;;;============================================================================
