@@ -220,10 +220,10 @@
   (vector proc 0))
 (define (get-dump-proc baton)
   (vector-ref baton 0))
-(define (get-dump-fp-offset baton)
+(define (get-dump-frame-size baton)
   (vector-ref baton 1))
-(define (set-dump-fp-offset! baton val)
-  (vector-set! baton 1 val))
+(define (set-dump-frame-size! baton size)
+  (vector-set! baton 1 size))
 
 ; name mangling to create valid c/php identifiers
 (define (mangle-name name)
@@ -244,7 +244,7 @@
 ; php-dump
 ;
 (define (php-dump targ procs output output-root c-intf script-line options)
-  ;(virtual.dump procs (current-output-port)) ;; just dump the GVM code for now
+  (virtual.dump procs (current-output-port)) ;; just dump the GVM code for now
   (set! port (current-output-port))
   (display "<?php\ninclude '../support/runtime.v1.php';\n\n")
   (for-each (lambda (proc) (scan-obj proc)) procs)
@@ -278,20 +278,19 @@
 (define (php-dump-bb bb baton)
   (php-dump-instr-label (bb-label-instr bb) baton)
   (display "global $reg0, $reg1, $reg2, $reg3, $pc, $fp, $stack;\n")
-  (for-each
-    (lambda (bb) (php-dump-instr bb baton))
-    (bb-non-branch-instrs bb))
-  (php-dump-instr (bb-branch-instr bb) baton)
-  (let ([frame-size-delta
-          (- (frame-size (gvm-instr-frame (bb-branch-instr bb)))
-             (frame-size (gvm-instr-frame (bb-label-instr bb))))])
-    (if (not (= 0 frame-size-delta))
+  (let (
+        [frame-size      (frame-size (gvm-instr-frame (bb-label-instr bb)))]
+        [frame-size-exit (frame-size (gvm-instr-frame (bb-branch-instr bb)))])
+    (set-dump-frame-size! baton frame-size)
+    (for-each
+      (lambda (bb) (php-dump-instr bb baton))
+      (bb-non-branch-instrs bb))
+    (php-dump-instr (bb-branch-instr bb) baton)
+    (if (not (= frame-size frame-size-exit))
       (begin
         (display "$fp = $fp")
-        (display-with-plus-or-minus frame-size-delta)
-        (display ";\n")
-        (set-dump-fp-offset! baton
-            (+ (get-dump-fp-offset baton) frame-size-delta)))))
+        (display-with-plus-or-minus (- frame-size-exit frame-size))
+        (display ";\n"))))
   (php-dump-instr-label-close (bb-label-instr bb))
 )
 
@@ -345,7 +344,7 @@
     [(reg? loc) (display "$reg")(display (reg-num loc))]
     [(stk? loc) (display "$stack[$fp")
                 (display-with-plus-or-minus
-                  (- (stk-num loc) (get-dump-fp-offset baton)))
+                  (- (stk-num loc) (get-dump-frame-size baton)))
                 (display "]")]
     [(obj? loc) (php-dump-scheme-object (obj-val loc))]
     [(glo? loc) (display "'glo_")(display (glo-name loc))(display "'")]
