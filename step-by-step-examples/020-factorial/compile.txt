@@ -1,0 +1,6 @@
+export GAMBIT_SOURCE=/home/olpa/p/scheme/gambit
+$GAMBIT_SOURCE/gsc/gsc
+
+(load (string-append (getenv "GAMBIT_SOURCE") "/gsc/_t-php.scm"))
+
+(c#cf "factorial.ss" 'php '() #f #f)
