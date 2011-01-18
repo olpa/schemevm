@@ -244,7 +244,7 @@
 ; php-dump
 ;
 (define (php-dump targ procs output output-root c-intf script-line options)
-  (virtual.dump procs (current-output-port)) ;; just dump the GVM code for now
+  ;(virtual.dump procs (current-output-port)) ;; just dump the GVM code for now
   (set! port (current-output-port))
   (display "<?php\ninclude '../support/runtime.v1.php';\n\n")
   (for-each (lambda (proc) (scan-obj proc)) procs)
@@ -342,10 +342,15 @@
         (display ";\n"))))))
 
 (define (php-dump-label-name num baton)
-  (display "lbl_")
-  (display (proc-obj-c-name (get-dump-proc baton)))
-  (display "_")
-  (display num))
+  (if (= 1 num)
+    (begin
+      (display "glo_")
+      (display (proc-obj-c-name (get-dump-proc baton))))
+    (begin
+      (display "lbl_")
+      (display (proc-obj-c-name (get-dump-proc baton)))
+      (display "_")
+      (display num))))
 
 (define (php-dump-loc loc baton)
   (cond
@@ -360,7 +365,7 @@
                 (php-dump-label-name (lbl-num loc) baton)
                 (display "'")]
     [else       (display "loc#")(display loc)])
-  (display " "))
+  )
 
 (define (php-dump-scheme-object obj)
   (if (proc-obj? obj)
