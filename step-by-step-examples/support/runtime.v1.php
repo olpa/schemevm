@@ -10,12 +10,14 @@ function glo_exit() {
   exit();
 }
 
+define('GLO_display', 'glo_display');
 function glo_display() {
   global $reg0, $reg1, $pc;
   print $reg1;
   $pc = $reg0;
 }
 
+define('GLO_newline', 'glo_newline');
 function glo_newline() {
   global $reg0, $pc;
   print "\n";
