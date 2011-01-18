@@ -4,3 +4,5 @@ $GAMBIT_SOURCE/gsc/gsc
 (load (string-append (getenv "GAMBIT_SOURCE") "/gsc/_t-php.scm"))
 
 (c#cf "hello.ss" 'php '() #f #f)
+
+(with-output-to-file (list path: "hello.php") (lambda () (c#cf "hello.ss" 'php '() #f #f)))
