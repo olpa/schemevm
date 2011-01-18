@@ -1,24 +1,16 @@
 <?php
-function display() {
-  global $pc, $reg0, $reg1;
-  print $reg1;
-  $pc = $reg0;
+include '../support/runtime.v1.php';
+
+// primitive x20hello =
+function glo_x20hello() {
+global $reg0, $reg1, $reg2, $reg3, $pc, $fp, $stack;
+$reg1 = "Hello, World!\n";
+$pc = 'lbl_x20hello_2';
+}
+function lbl_x20hello_2() {
+global $reg0, $reg1, $reg2, $reg3, $pc, $fp, $stack;
+$pc = GLO_display;
 }
 
-$reg0 = 'exit';
-$pc   = 'entry-point';
-while (1) {
-  switch ($pc) {
-    case 'entry-point':              // #1 0 entry-point 0 ()
-      $reg1 = "Hello, World!\n";     // +1 = '"Hello, World!\n"
-      $pc   = '#2'; break;           // jump* 0 #2
-    case '#2':                       // #2 0
-      $pc   = 'display'; break;      // jump$ 0 display 1
-    case 'display':
-      display(); break;
-    case 'exit':
-      break 2;
-  }
-}
-
+exec_scheme_code('glo_x20hello');
 ?>

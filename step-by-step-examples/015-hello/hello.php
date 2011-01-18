@@ -1,40 +1,40 @@
 <?php
 include '../support/runtime.v1.php';
 
-// primitive | hello| =
-function lbl_1() {
+// primitive x20hello =
+function glo_x20hello() {
 global $reg0, $reg1, $reg2, $reg3, $pc, $fp, $stack;
-$stack[$fp+1]  = $reg0 ;
-$reg1  = "Hello, World!" ;
-$reg0  = 'lbl_3' ;
-$pc = 'lbl_2' ;
+$stack[$fp+1] = $reg0;
+$reg1 = "Hello, World!";
+$reg0 = 'lbl_x20hello_3';
+$pc = 'lbl_x20hello_2';
 $fp = $fp+4;
 }
-function lbl_2() {
+function lbl_x20hello_2() {
 global $reg0, $reg1, $reg2, $reg3, $pc, $fp, $stack;
-$pc = 'glo_display' ;
+$pc = GLO_display;
 }
-function lbl_3() {
+function lbl_x20hello_3() {
 global $reg0, $reg1, $reg2, $reg3, $pc, $fp, $stack;
-$reg0  = 'lbl_4' ;
-$pc = 'glo_newline' ;
+$reg0 = 'lbl_x20hello_4';
+$pc = GLO_newline;
 }
-function lbl_4() {
+function lbl_x20hello_4() {
 global $reg0, $reg1, $reg2, $reg3, $pc, $fp, $stack;
-$reg1  = "Hello, World!" ;
-$reg0  = 'lbl_5' ;
-$pc = 'glo_display' ;
+$reg1 = "Hello, World!";
+$reg0 = 'lbl_x20hello_5';
+$pc = GLO_display;
 }
-function lbl_5() {
+function lbl_x20hello_5() {
 global $reg0, $reg1, $reg2, $reg3, $pc, $fp, $stack;
-$reg0  = $stack[$fp-3] ;
-$pc = 'lbl_6' ;
+$reg0 = $stack[$fp-3];
+$pc = 'lbl_x20hello_6';
 }
-function lbl_6() {
+function lbl_x20hello_6() {
 global $reg0, $reg1, $reg2, $reg3, $pc, $fp, $stack;
-$pc = 'glo_newline' ;
+$pc = GLO_newline;
 $fp = $fp-4;
 }
 
-exec_scheme_code('lbl_1');
+exec_scheme_code('glo_x20hello');
 ?>
