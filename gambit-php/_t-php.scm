@@ -325,13 +325,21 @@
   ))
 
 (define (php-dump-instr-copy instr baton)
-  (let ([copy-opnd (copy-opnd instr)])
-    (if copy-opnd
-      (begin
-        (php-dump-loc (copy-loc instr) baton)
-        (display " = ")
-        (php-dump-loc copy-opnd baton)
-        (display ";\n")))))
+  (let ([copy-loc  (copy-loc instr)]
+        [copy-opnd (copy-opnd instr)])
+    (if copy-opnd ; there are dummy copy instructions
+      (if (glo? copy-loc)
+        (begin
+          (display "DEFINE('")
+          (php-dump-loc copy-loc baton)
+          (display "', ")
+          (php-dump-loc copy-opnd baton)
+          (display ");\n"))
+        (begin
+          (php-dump-loc copy-loc baton)
+          (display " = ")
+          (php-dump-loc copy-opnd baton)
+        (display ";\n"))))))
 
 (define (php-dump-label-name num baton)
   (display "lbl_")
@@ -347,7 +355,7 @@
                   (- (stk-num loc) (get-dump-frame-size baton)))
                 (display "]")]
     [(obj? loc) (php-dump-scheme-object (obj-val loc))]
-    [(glo? loc) (display "'glo_")(display (glo-name loc))(display "'")]
+    [(glo? loc) (display "GLO_")(display (glo-name loc))]
     [(lbl? loc) (display "'")
                 (php-dump-label-name (lbl-num loc) baton)
                 (display "'")]
@@ -379,9 +387,9 @@
   (display ")) {")
   (let ((print-jump-loc (lambda (loc)
                 (and loc (begin
-                    (display " $pc=")
+                    (display " $pc='")
                     (php-dump-label-name loc baton)
-                    (display ";"))))))
+                    (display "';"))))))
     (print-jump-loc (ifjump-true instr))
     (let ((false-loc (ifjump-false instr)))
       (if false-loc (begin
