@@ -1,0 +1,8 @@
+export GAMBIT_SOURCE=/home/olpa/p/scheme/gambit
+$GAMBIT_SOURCE/gsc/gsc
+
+(load (string-append (getenv "GAMBIT_SOURCE") "/gsc/_t-php.scm"))
+
+(c#cf "fibonacci.ss" 'php '() #f #f)
+
+(with-output-to-file (list path: "fibonacci.php") (lambda () (c#cf "fibonacci.ss" 'php '() #f #f)))
