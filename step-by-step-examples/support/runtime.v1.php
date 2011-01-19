@@ -34,6 +34,12 @@ function glo_x23x23not($b) { // ##not: primitive
   return ! $b;
 }
 
+function glo_x2b() { // +
+  global $reg0, $reg1, $reg2, $pc;
+  $reg1 = $reg1 + $reg2;
+  $pc = $reg0;
+}
+
 function glo_x2d() { // -
   global $reg0, $reg1, $reg2, $pc;
   $reg1 = $reg1 - $reg2;
@@ -43,6 +49,12 @@ function glo_x2d() { // -
 function glo_x2a() { // *
   global $reg0, $reg1, $reg2, $pc;
   $reg1 = $reg1 * $reg2;
+  $pc = $reg0;
+}
+
+function glo_x3c() { // <
+  global $reg0, $reg1, $reg2, $pc;
+  $reg1 = $reg1 < $reg2;
   $pc = $reg0;
 }
 
