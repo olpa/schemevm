@@ -163,6 +163,38 @@
 
 (define univ-frame-alignment 4) ;; align frame to multiple of 4 slots
 
+;
+; Print s-expression up to the level n
+;
+(define (print-sexp-level-n sexp n)
+  (cond
+    ((pair? sexp)
+      (if (< n 1)
+        (display "#list#")
+        (let loop ((ls sexp) (sep "("))
+          (display sep)
+          (if (pair? ls)
+            (begin
+              (print-sexp-level-n (car ls) (- n 1))
+              (loop (cdr ls) " "))
+            (begin
+              (if (not (null? ls))
+                (begin
+                  (display ". ")
+                  (display ls)))
+              (display ")"))))))
+    ((vector? sexp)
+      (let loop ((sep "#(") (ls (vector->list sexp)))
+        (display sep)
+        (if (null? ls)
+          (display ")")
+          (begin
+            (print-sexp-level-n (car ls) (- n 1))
+            (loop " " (cdr ls))))))
+    (else
+      (display sexp))))
+
+
 ;; ***** PRIMITIVE PROCEDURE DATABASE
 
 (define (univ-prim-info targ name)
@@ -306,6 +338,7 @@
       ((eq? instr-type 'copy)   (php-dump-instr-copy    instr baton))
       ((eq? instr-type 'jump)   (php-dump-instr-jump    instr baton))
       ((eq? instr-type 'ifjump) (php-dump-instr-ifjump  instr baton))
+      ((eq? instr-type 'close)  (php-dump-instr-close   instr baton))
       (else                     (php-dump-instr-unknown instr)))))
 
 (define (php-dump-instr-unknown instr)
@@ -402,5 +435,18 @@
           (print-jump-loc false-loc)))))
   (display " }\n")
 )
+
+(define (php-dump-instr-close instr baton)
+  (display "TODO create closure: ")
+  (print-sexp-level-n instr 2)
+  ;(map (lambda (parm)
+  ;       (map
+  ;         (lambda (loc)
+  ;           (php-dump-loc loc baton)
+  ;           )
+  ;         (display ", ")
+  ;         (closure-parms-opnds parm)))
+  ;     (close-parms instr))
+  (display ".\n"))
 
 ;;;============================================================================
