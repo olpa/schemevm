@@ -181,7 +181,7 @@
               (if (not (null? ls))
                 (begin
                   (display ". ")
-                  (display ls)))
+                  (print-sexp-level-n ls (- n 1))))
               (display ")"))))))
     ((vector? sexp)
       (let loop ((sep "#(") (ls (vector->list sexp)))
@@ -438,15 +438,14 @@
 
 (define (php-dump-instr-close instr baton)
   (display "TODO create closure: ")
-  (print-sexp-level-n instr 2)
-  ;(map (lambda (parm)
-  ;       (map
-  ;         (lambda (loc)
-  ;           (php-dump-loc loc baton)
-  ;           )
-  ;         (display ", ")
-  ;         (closure-parms-opnds parm)))
-  ;     (close-parms instr))
+  (map (lambda (parms)
+         (map
+           (lambda (loc)
+             (php-dump-loc loc baton)
+             (display ", "))
+           (closure-parms-opnds parms))
+         )
+       (close-parms instr))
   (display ".\n"))
 
 ;;;============================================================================
