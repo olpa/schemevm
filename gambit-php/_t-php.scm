@@ -309,7 +309,7 @@
 
 (define (php-dump-bb bb baton)
   (php-dump-instr-label (bb-label-instr bb) baton)
-  (display "global $reg0, $reg1, $reg2, $reg3, $pc, $fp, $stack;\n")
+  (display "global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack;\n")
   (let (
         [frame-size      (frame-size (gvm-instr-frame (bb-label-instr bb)))]
         [frame-size-exit (frame-size (gvm-instr-frame (bb-branch-instr bb)))])
@@ -361,18 +361,11 @@
   (let ([copy-loc  (copy-loc instr)]
         [copy-opnd (copy-opnd instr)])
     (if copy-opnd ; there are dummy copy instructions
-      (if (glo? copy-loc)
-        (begin
-          (display "DEFINE('")
-          (php-dump-loc copy-loc baton)
-          (display "', ")
-          (php-dump-loc copy-opnd baton)
-          (display ");\n"))
-        (begin
-          (php-dump-loc copy-loc baton)
-          (display " = ")
-          (php-dump-loc copy-opnd baton)
-        (display ";\n"))))))
+      (begin
+        (php-dump-loc copy-loc baton)
+        (display " = ")
+        (php-dump-loc copy-opnd baton)
+        (display ";\n")))))
 
 (define (php-dump-label-name num baton)
   (if (= 1 num)
@@ -393,7 +386,9 @@
                   (- (stk-num loc) (get-dump-frame-size baton)))
                 (display "]")]
     [(obj? loc) (php-dump-scheme-object (obj-val loc))]
-    [(glo? loc) (display "GLO_")(display (glo-name loc))]
+    [(glo? loc) (display "$GLOBALS['glo_")
+                (display (glo-name loc))
+                (display "']")]
     [(lbl? loc) (display "'")
                 (php-dump-label-name (lbl-num loc) baton)
                 (display "'")]
@@ -451,7 +446,6 @@
            (closure-parms-opnds parms))
          (display ");\n");
          )
-       (close-parms instr))
-  (display ".\n"))
+       (close-parms instr)))
 
 ;;;============================================================================
