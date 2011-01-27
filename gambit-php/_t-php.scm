@@ -397,6 +397,8 @@
     [(lbl? loc) (display "'")
                 (php-dump-label-name (lbl-num loc) baton)
                 (display "'")]
+    [(clo? loc) (php-dump-loc (clo-base loc) baton)
+                (display "[")(display (clo-index loc))(display "]")]
     [else       (display "loc#")(display loc)])
   )
 
@@ -437,13 +439,17 @@
 )
 
 (define (php-dump-instr-close instr baton)
-  (display "TODO create closure: ")
   (map (lambda (parms)
+         (php-dump-loc (closure-parms-loc parms) baton)
+         (display " = array('")
+         (php-dump-label-name (closure-parms-lbl parms) baton)
+         (display "'")
          (map
            (lambda (loc)
-             (php-dump-loc loc baton)
-             (display ", "))
+             (display ", ")
+             (php-dump-loc loc baton))
            (closure-parms-opnds parms))
+         (display ");\n");
          )
        (close-parms instr))
   (display ".\n"))
