@@ -309,7 +309,7 @@
 
 (define (php-dump-bb bb baton)
   (php-dump-instr-label (bb-label-instr bb) baton)
-  (display "global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack;\n")
+  (display "global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;\n")
   (let (
         [frame-size      (frame-size (gvm-instr-frame (bb-label-instr bb)))]
         [frame-size-exit (frame-size (gvm-instr-frame (bb-branch-instr bb)))])
@@ -404,6 +404,12 @@
     (write obj)))
 
 (define (php-dump-instr-jump instr baton)
+  (let ((nb-args (jump-nb-args instr)))
+    (if nb-args
+      (begin
+        (display "$nargs = ")
+        (display (jump-nb-args instr))
+        (display ";\n"))))
   (display "$pc = ")
   (php-dump-loc (jump-opnd instr) baton)
   (display ";\n"))
