@@ -26,7 +26,7 @@ function glo_newline() {
 
 function glo_zerox3f() { // zero?
   global $reg0, $reg1, $pc;
-  $reg1 = (0 ===  $reg1);
+  $reg1 = (0 ==  $reg1);
   $pc = $reg0;
 }
 
@@ -35,8 +35,12 @@ function glo_x23x23not($b) { // ##not: primitive
 }
 
 function glo_x2b() { // +
-  global $reg0, $reg1, $reg2, $pc;
-  $reg1 = $reg1 + $reg2;
+  global $reg0, $reg1, $reg2, $reg3, $pc, $nargs, $stack, $fp;
+  if (4 == $nargs) {
+    $reg1 = $reg1 + $reg2 + $reg3 + $stack[$fp+1];
+  } else {
+    $reg1 = $reg1 + $reg2;
+  }
   $pc = $reg0;
 }
 
@@ -59,13 +63,19 @@ function glo_x3c() { // <
 }
 
 function exec_scheme_code($pc_main) {
-  global $pc, $reg0, $reg1, $reg2, $stack, $fp;
+  global $pc, $reg0, $reg1, $reg2, $reg3, $reg4, $stack, $fp;
   $stack = array();
   $fp    = 0;
   $reg0  = 'glo_exit';
   $pc    = $pc_main;
   while (1) { // at some moment, glo_exit performs exit()
     //print "pc='$pc', fp='$fp', reg1='$reg1', reg2='$reg2'\n";flush();
+    //print_r($stack);
+    // closure
+    if (is_array($pc)) {
+      $reg4 = $pc;
+      $pc   = $pc[0];
+    }
     $pc();
   }
 }
