@@ -304,36 +304,21 @@
       (display "No, not a bbs\n")))
   )
 
-(define (bbs->list bbs)
-  (let ((ls '()))
-    (bbs-for-each-bb (lambda (bb) (set! ls (cons bb ls))) bbs)
-    (reverse ls)))
-
-; Print all the basic blocks. For the first and the last block,
-; perform frame pointer correction.
 (define (php-dump-bbs bbs baton)
-  (let loop (
-             [is-first  #t]
-             [bb-ls     (bbs->list bbs)])
-    (if (not (null? bb-ls))
-      (begin
-        (php-dump-bb (car bb-ls) baton
-                     (or is-first (null? (cdr bb-ls))))
-        (loop #f (cdr bb-ls))))))
+  (bbs-for-each-bb (lambda (bb) (php-dump-bb bb baton)) bbs))
 
-(define (php-dump-bb bb baton do-frame-correction?)
+(define (php-dump-bb bb baton)
   (php-dump-instr-label (bb-label-instr bb) baton)
   (display "global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;\n")
   (let (
         [frame-size      (frame-size (gvm-instr-frame (bb-label-instr bb)))]
         [frame-size-exit (frame-size (gvm-instr-frame (bb-branch-instr bb)))])
-    (if do-frame-correction?
-      (set-dump-frame-size! baton frame-size))
+    (set-dump-frame-size! baton frame-size)
     (for-each
       (lambda (bb) (php-dump-instr bb baton))
       (bb-non-branch-instrs bb))
     (php-dump-instr (bb-branch-instr bb) baton)
-    (if (and do-frame-correction? (not (= frame-size frame-size-exit)))
+    (if (not (= frame-size frame-size-exit))
       (begin
         (display "$fp = $fp")
         (display-with-plus-or-minus (- frame-size-exit frame-size))
