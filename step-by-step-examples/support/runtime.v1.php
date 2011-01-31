@@ -37,7 +37,8 @@ function glo_x23x23not($b) { // ##not: primitive
 function glo_x2b() { // +
   global $reg0, $reg1, $reg2, $reg3, $pc, $nargs, $stack, $fp;
   if (4 == $nargs) {
-    $reg1 = $reg1 + $reg2 + $reg3 + $stack[$fp+1];
+    $reg1 = $reg1 + $reg2 + $reg3 + $stack[$fp+0];
+    $fp   = $fp-1;
   } else {
     $reg1 = $reg1 + $reg2;
   }
