@@ -63,6 +63,19 @@ function glo_x3c() { // <
   $pc = $reg0;
 }
 
+// from "The 90 Minute Scheme to C compiler"
+// (define call/cc
+//  (lambda (k f)
+//    (f k (lambda (dummy-k result)
+//           (k result)))))
+function glo_callx2dwithx2dcurrentx2dcontinuation() {
+  global $reg0; // k
+  global $reg1; // f
+  global $pc;
+  $pc = $reg1;
+  $reg1 = array('#continuation', $reg0);
+}
+
 function exec_scheme_code($pc_main) {
   global $pc, $reg0, $reg1, $reg2, $reg3, $reg4, $stack, $fp;
   $stack = array();
@@ -74,8 +87,12 @@ function exec_scheme_code($pc_main) {
     //print_r($stack);
     // closure
     if (is_array($pc)) {
-      $reg4 = $pc;
-      $pc   = $pc[0];
+      if ('#continuation' == $pc[0]) {
+        $pc = $pc[1];
+      } else {
+        $reg4 = $pc;
+        $pc   = $pc[0];
+      }
     }
     $pc();
   }
