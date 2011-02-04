@@ -401,7 +401,10 @@
   (if (proc-obj? obj)
     (begin (scan-obj obj)
            (display "'glo_")(display (proc-obj-c-name obj))(display "'"))
-    (write obj)))
+    (if (char? obj)
+      (begin
+        (display #\')(display obj)(display #\')) ; FIXME: fails for ' and \
+      (write obj))))
 
 (define (php-dump-instr-jump instr baton)
   (let ((nb-args (jump-nb-args instr)))
