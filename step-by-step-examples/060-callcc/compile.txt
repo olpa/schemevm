@@ -1,0 +1,9 @@
+export GAMBIT_SOURCE=/home/olpa/p/scheme/gambit
+$GAMBIT_SOURCE/gsc/gsc
+
+(load (string-append (getenv "GAMBIT_SOURCE") "/gsc/_t-php.scm"))
+
+(c#cf "return.ss" 'php '() #f #f)
+
+(with-output-to-file (list path: "return.php") (lambda () (c#cf "return.ss" 'php '() #f #f)))
+(with-output-to-file (list path: "yin-yang.php") (lambda () (c#cf "yin-yang.ss" 'php '() #f #f)))
