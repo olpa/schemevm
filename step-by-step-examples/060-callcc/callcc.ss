@@ -1,4 +1,7 @@
 ; Taken from CPSCM
+;
+; FIXME: this example does not work, because
+; "dynamic-wind" is not implemented.
 
 (let ()
   (define in #f)
