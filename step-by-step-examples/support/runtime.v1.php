@@ -1,6 +1,7 @@
 <?php
 
-define('DEBUG', TRUE);
+//define('DEBUG', TRUE);
+define('DEBUG', FALSE);
 
 function glo_exit() {
   global $fp, $reg1, $stack;
@@ -68,12 +69,14 @@ function glo_x3c() { // <
 //  (lambda (k f)
 //    (f k (lambda (dummy-k result)
 //           (k result)))))
+$GLOBALS['glo_call-with-current-continuation'] = 'glo_callx2dwithx2dcurrentx2dcontinuation';
 function glo_callx2dwithx2dcurrentx2dcontinuation() {
   global $reg0; // k
   global $reg1; // f
-  global $pc;
+  global $pc, $fp, $stack;
   $pc = $reg1;
-  $reg1 = array('#continuation', $reg0);
+  $stack_copy = $stack; // promised to be a shallow copy
+  $reg1 = array('#continuation', $reg0, $fp, $stack_copy);
 }
 
 function exec_scheme_code($pc_main) {
@@ -88,6 +91,8 @@ function exec_scheme_code($pc_main) {
     // closure
     if (is_array($pc)) {
       if ('#continuation' == $pc[0]) {
+        $stack = $pc[3]; // Must be a copy too
+        $fp = $pc[2];
         $pc = $pc[1];
       } else {
         $reg4 = $pc;
