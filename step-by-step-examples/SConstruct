@@ -3,15 +3,27 @@ path_to_gambit = '/home/olpa/p/scheme/gambit'
 import os
 os.environ['GAMBIT_SOURCE'] = path_to_gambit
 
+path_to_php_exec = os.environ.get('PHP', 'php')
+
 bld = Builder(src_suffix='.ss', suffix='.php',
    action='''$GSC -e "(load (string-append (getenv \\"GAMBIT_SOURCE\\") \\"/gsc/_t-php.scm\\"))(with-output-to-file (list path: \\"$TARGET\\") (lambda () (c#cf \\"$SOURCE\\" 'php '() #f #f)))" ''')
 
 env = Environment(
   BUILDERS = {'PhpFromScheme': bld},
   GSC      = os.path.join(path_to_gambit, 'gsc', 'gsc'),
+  PHP      = path_to_php_exec,
   ENV      = os.environ)
 
 for ss_file in Glob(os.path.join('*', '*.ss')):
   php_file = str(ss_file)[:-3] + '.php'
+  if 'callcc.php' in php_file: # not supported
+    continue
   node = env.PhpFromScheme(php_file, ss_file)
   Alias('compile-all', node)
+  if 'yin-yang' in php_file:
+    node = env.Command(None, php_file, '$PHP ${SOURCE.file} | head -c 255', chdir=1)
+  else:
+    node = env.Command(None, php_file, '$PHP ${SOURCE.file}', chdir=1)
+  Alias('run-all', node)
+
+Default('run-all')
