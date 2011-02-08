@@ -6,6 +6,7 @@ def add_to_install(file):
   node = InstallAs(os.path.join(out_dir, file[3:]), file)
   Alias('copy', node)
 
+InstallAs(os.path.join(out_dir, 'README'), 'README')
 add_to_install('../gambit-php/_t-php.scm')
 add_to_install('../gambit-php/README')
 add_to_install('../step-by-step-examples/SConstruct')
