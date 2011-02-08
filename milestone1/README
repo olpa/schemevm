@@ -1,12 +1,5 @@
-Gambit Scheme PHP backend
-
-Which primitives to implement? How to get the complete implementation then?
-
-Mostly no need for type check.
-
-Integrate to command line?
-
-----------
+Gambit Scheme PHP backend, milestone 1: proof of concept
+http://github.com/olpa/schemevm/
 
 The goal of this release is to mark the milestone 1. I wanted to understand the GVM and to check if compilation to PHP is possible. This is done. While the current gambit-php version is very limited (only a few primitives are partially implemented), it covers all the important functionality:
 
@@ -21,19 +14,10 @@ I coded straightforward. If I saw a way to solve a problem, I used this way with
 
 One of the consequences is that performance is poor. For example, Ackermann function A(3,9) is 100 times slowed as by gsi-script and 30 times slower as native PHP implementation. The output from yin-yang puzzle is 30 times slower as by gsi-script and 10 times slower as by Guile. However, I'm optimistic and think there is a lot of possibilties for optimization.
 
-------------------
+The code is developed for PHP 4.4.8 and tested under PHP 3.0.
 
-Ackermann:
+To re-compile the examples, see the instructions in "./gambit-php/README".
 
-A(3,9):
-
-gsi-script:  6.5 sec
-guile:       stack overflow
-scm-php      680 sec
-php native   26 sec
-
---------
-
-rus: how to implement goto?
-why slow? (maybe stack)
-who needs what?
+-- 
+Oleg Parashchenko <olpa uucode code>
+http://uucode.com/
