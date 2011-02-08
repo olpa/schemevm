@@ -6,8 +6,8 @@ function glo_x20ackermann() {
 global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
 $GLOBALS['glo_ack'] = 'glo_ack';
 $stack[$fp+1] = $reg0;
-$reg2 = 9;
-$reg1 = 3;
+$reg2 = 2;
+$reg1 = 1;
 $reg0 = 'lbl_x20ackermann_3';
 $pc = 'lbl_x20ackermann_2';
 $fp = $fp+4;
@@ -21,7 +21,7 @@ function lbl_x20ackermann_3() {
 global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
 $reg0 = 'lbl_x20ackermann_4';
 $nargs = 1;
-$pc = 'glo_display';
+$pc = $GLOBALS['glo_display'];
 }
 function lbl_x20ackermann_4() {
 global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
@@ -31,7 +31,7 @@ $pc = 'lbl_x20ackermann_5';
 function lbl_x20ackermann_5() {
 global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
 $nargs = 0;
-$pc = 'glo_newline';
+$pc = $GLOBALS['glo_newline'];
 $fp = $fp-4;
 }
 // procedure ack =
@@ -48,7 +48,7 @@ $fp = $fp+8;
 function lbl_ack_2() {
 global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
 $nargs = 2;
-$pc = 'glo_x3d';
+$pc = $GLOBALS['glo_='];
 }
 function lbl_ack_3() {
 global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
@@ -65,7 +65,7 @@ $pc = 'lbl_ack_5';
 function lbl_ack_5() {
 global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
 $nargs = 2;
-$pc = 'glo_x2b';
+$pc = $GLOBALS['glo_+'];
 $fp = $fp-8;
 }
 function lbl_ack_6() {
@@ -74,7 +74,7 @@ $reg1 = $stack[$fp-5];
 $reg2 = 0;
 $reg0 = 'lbl_ack_7';
 $nargs = 2;
-$pc = 'glo_x3d';
+$pc = $GLOBALS['glo_='];
 }
 function lbl_ack_7() {
 global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
@@ -87,7 +87,7 @@ $reg1 = $stack[$fp-6];
 $reg2 = 1;
 $reg0 = 'lbl_ack_9';
 $nargs = 2;
-$pc = 'glo_x2d';
+$pc = $GLOBALS['glo_-'];
 }
 function lbl_ack_9() {
 global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
@@ -96,7 +96,7 @@ $reg1 = $stack[$fp-5];
 $reg2 = 1;
 $reg0 = 'lbl_ack_10';
 $nargs = 2;
-$pc = 'glo_x2d';
+$pc = $GLOBALS['glo_-'];
 }
 function lbl_ack_10() {
 global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
@@ -125,7 +125,7 @@ $reg1 = $stack[$fp-6];
 $reg2 = 1;
 $reg0 = 'lbl_ack_14';
 $nargs = 2;
-$pc = 'glo_x2d';
+$pc = $GLOBALS['glo_-'];
 $fp = $fp-4;
 }
 function lbl_ack_14() {
