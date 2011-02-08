@@ -64,6 +64,12 @@ function glo_x3c() { // <
   $pc = $reg0;
 }
 
+function glo_x3d() { // =
+  global $reg0, $reg1, $reg2, $pc;
+  $reg1 = $reg1 == $reg2;
+  $pc = $reg0;
+}
+
 // from "The 90 Minute Scheme to C compiler"
 // (define call/cc
 //  (lambda (k f)
