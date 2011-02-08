@@ -1,0 +1,19 @@
+out_dir = 'gambit-php-20110208-milestone1'
+
+import os, glob
+
+def add_to_install(file):
+  node = InstallAs(os.path.join(out_dir, file[3:]), file)
+  Alias('copy', node)
+
+add_to_install('../gambit-php/_t-php.scm')
+add_to_install('../gambit-php/README')
+add_to_install('../step-by-step-examples/SConstruct')
+flist1 = glob.glob('../step-by-step-examples/*/*.ss')
+flist2 = glob.glob('../step-by-step-examples/*/*.php')
+flist1.extend(flist2)
+for fname in flist1:
+  add_to_install(fname)
+
+node = Tar(out_dir + '.tar.gz', out_dir, TARFLAGS = '-c -z')
+Alias('dist', node)
