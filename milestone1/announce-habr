@@ -43,4 +43,82 @@ ___пример и технические детали под хаброкато
 -N ячейка N фрейма стека
 Параметры функций: первый в +1, второй в +2 и т.д.
 Результат функции возвращается в +1
+FIXME: cont-passing style, +0
+Здесь и далее, escape-sequence заменены на русские буквы
 
+#1 0 entry-point 0 ()
+  |~#сделать-писателя| = '#<procedure |~#сделать-писателя|>
+  -1 = +0
+  +1 = '"Привет!\n"
+  +0 = #3
+  jump* 4 #2
+#2 4
+  jump$ 4 |~#сделать-писателя| 1
+#3 4 return-point
+  |~#пиши-привет| = +1
+  +0 = -1
+  jump* 4 #4
+#4 4
+  jump$ 0 |~#пиши-привет| 0
+
+**** #<procedure |~#сделать-писателя|> =
+#1 0 entry-point 1 ()
+  close -1 = (#2 +1)
+  +1 = -1
+  jump 0 +0
+#2 0 closure-entry-point 0 ()
+  +1 = +4(1)
+  jump* 0 #3
+#3 0
+  jump$ 0 display 1
+
+PHP:
+
+function glo_x20hellowr() {
+global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+$GLOBALS['glo_сделать-писателя'] = 'glo_сделать_писателя';
+$stack[$fp+1] = $reg0;
+$reg1 = "Привет!\n";
+$reg0 = 'lbl_x20hellowr_3';
+$pc = 'lbl_x20hellowr_2';
+$fp = $fp+4;
+}
+function lbl_x20hellowr_2() {
+global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+$nargs = 1;
+$pc = $GLOBALS['glo_сделать-писателя'];
+}
+function lbl_x20hellowr_3() {
+global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+$GLOBALS['glo_пиши-привет'] = $reg1;
+$reg0 = $stack[$fp-3];
+$pc = 'lbl_x20hellowr_4';
+}
+function lbl_x20hellowr_4() {
+global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+$nargs = 0;
+$pc = $GLOBALS['glo_пиши-привет'];
+$fp = $fp-4;
+}
+// procedure сделать-писателя =
+function glo_сделать_писателя() {
+global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+$stack[$fp+1] = array('lbl_сделать_писателя_2', $reg1);
+$reg1 = $stack[$fp+1];
+$pc = $reg0;
+}
+function lbl_сделать_писателя_2() {
+global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+$reg1 = $reg4[1];
+$pc = 'lbl_сделать_писателя_3';
+}
+function lbl_сделать_писателя_3() {
+global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+$nargs = 1;
+$pc = $GLOBALS['glo_display'];
+}
+
+Запускается как
+exec_scheme_code('glo_x20hellowr');
+где exec_scheme_code примерно такое:
+while(1) { $pc = $pc() }
