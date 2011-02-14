@@ -39,20 +39,24 @@ ___пример и технические детали под хаброкато
 
 Для своего проекта я использую компилятор Схемы ___Gambit___. Внутри него — регистрово-стековая виртуальная машина GVM ("___статья___"). Вот, во что превращается наш пример, когда оказывается в GVM:
 
-+N регистр номер N
--N ячейка N фрейма стека
-Параметры функций: первый в +1, второй в +2 и т.д.
-Результат функции возвращается в +1
-FIXME: cont-passing style, +0
-Здесь и далее, escape-sequence заменены на русские буквы
-
+; +N регистр номер N
+; -N ячейка N фрейма стека
+; Параметры функций: первый в +1, второй в +2 и т.д.
+; Результат функции возвращается в +1
+; Используется continuation-passing style, адрес перехода-возврата лежит в +0
+; Здесь и далее, escape-sequence заменены на русские буквы
+;
+; Метка #1 плюс всякие полезности
 #1 0 entry-point 0 ()
+  ; Глобальная переменная "сделать-писателя" указывает на функцию
   |~#сделать-писателя| = '#<procedure |~#сделать-писателя|>
   -1 = +0
   +1 = '"Привет!\n"
   +0 = #3
+  ; Переход на метку #2 плюс всякие полезности
   jump* 4 #2
 #2 4
+  ; Вызывает функцию. Так как в +0 лежит адрес #3, то туда и вернёмся, а в +1 будет лежать анонимная функция (замыкание)
   jump$ 4 |~#сделать-писателя| 1
 #3 4 return-point
   |~#пиши-привет| = +1
@@ -63,62 +67,91 @@ FIXME: cont-passing style, +0
 
 **** #<procedure |~#сделать-писателя|> =
 #1 0 entry-point 1 ()
+  ; Замыкание -- это функцию плюс параметры
   close -1 = (#2 +1)
   +1 = -1
   jump 0 +0
+  ; Начало анонимной функции
 #2 0 closure-entry-point 0 ()
+  ; В +4 лежит замыкание, +4(1) -- первый параметр
   +1 = +4(1)
   jump* 0 #3
 #3 0
   jump$ 0 display 1
 
-PHP:
+Результат трансляции GVM на PHP:
 
 function glo_x20hellowr() {
-global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
-$GLOBALS['glo_сделать-писателя'] = 'glo_сделать_писателя';
-$stack[$fp+1] = $reg0;
-$reg1 = "Привет!\n";
-$reg0 = 'lbl_x20hellowr_3';
-$pc = 'lbl_x20hellowr_2';
-$fp = $fp+4;
+  global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+  $GLOBALS['glo_сделать-писателя'] = 'glo_сделать_писателя';
+  $stack[$fp+1] = $reg0;
+  $reg1 = "Привет!\n";
+  $reg0 = 'lbl_x20hellowr_3';
+  $pc = 'lbl_x20hellowr_2';
+  $fp = $fp+4;
 }
 function lbl_x20hellowr_2() {
-global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
-$nargs = 1;
-$pc = $GLOBALS['glo_сделать-писателя'];
+  global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+  $nargs = 1;
+  $pc = $GLOBALS['glo_сделать-писателя'];
 }
 function lbl_x20hellowr_3() {
-global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
-$GLOBALS['glo_пиши-привет'] = $reg1;
-$reg0 = $stack[$fp-3];
-$pc = 'lbl_x20hellowr_4';
+  global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+  $GLOBALS['glo_пиши-привет'] = $reg1;
+  $reg0 = $stack[$fp-3];
+  $pc = 'lbl_x20hellowr_4';
 }
 function lbl_x20hellowr_4() {
-global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
-$nargs = 0;
-$pc = $GLOBALS['glo_пиши-привет'];
-$fp = $fp-4;
+  global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+  $nargs = 0;
+  $pc = $GLOBALS['glo_пиши-привет'];
+  $fp = $fp-4;
 }
 // procedure сделать-писателя =
 function glo_сделать_писателя() {
-global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
-$stack[$fp+1] = array('lbl_сделать_писателя_2', $reg1);
-$reg1 = $stack[$fp+1];
-$pc = $reg0;
+  global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+  $stack[$fp+1] = array('lbl_сделать_писателя_2', $reg1);
+  $reg1 = $stack[$fp+1];
+  $pc = $reg0;
 }
 function lbl_сделать_писателя_2() {
-global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
-$reg1 = $reg4[1];
-$pc = 'lbl_сделать_писателя_3';
+  global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+  $reg1 = $reg4[1];
+  $pc = 'lbl_сделать_писателя_3';
 }
 function lbl_сделать_писателя_3() {
-global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
-$nargs = 1;
-$pc = $GLOBALS['glo_display'];
+  global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+  $nargs = 1;
+  $pc = $GLOBALS['glo_display'];
+}
+exec_scheme_code('glo_x20hellowr');
+
+1) Как реализовать goto?
+
+Каждый блок GVM (от метки до перехода) становится функцией PHP, которая возвращает, куда надо goto. Исполнитель программы "exec_scheme_code($pc)" выглядит примерно так:
+
+$reg0 = 'glo_exit';
+while(1) {
+  $pc = $pc()
 }
 
-Запускается как
-exec_scheme_code('glo_x20hellowr');
-где exec_scheme_code примерно такое:
-while(1) { $pc = $pc() }
+Вместо компилятора тут получился интерпретатор. Производительность страдает.
+
+Альтернативы?
+
+
+2) Superglobals
+
+В каждой функции приходится перечислять одни и те же глобальные переменные. Может, есть способ сказать PHP, что они глобальные по умолчанию?
+
+3) Стек
+
+Вместо аппаратного стека надо использовать программный. Естественно, я взял массив. И немного не угадал. Оказывается, они всегда ассоциативные, с кучей любопытных побочных эффектов, что тоже замедляет работу.
+
+Как сделать быстрый стек?
+
+4) Производительность
+
+Естественно, такой PHP-код тормозит. Например, по сравнению с ручной реализацией функции Аккерманна, он в 30 раз медленнее. Я подозреваю, почему (недо-goto и стек), но хочу убедиться.
+
+Какими инструментами мерять, что тормозит?
