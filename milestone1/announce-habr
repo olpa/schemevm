@@ -2,155 +2,159 @@
 
 Часть проекта, которая «превращать в PHP», готова не полностью. Но я пишу статью уже сейчас, чтобы:
 
-* узнать, кому ещё интересен проект
-* спросить у опытных пхпшников, как улучшить мой PHP-код и как померять, что именно тормозит.
-
-___пример и технические детали под хаброкатом___
+<ul>
+<li>узнать, кому ещё интересен проект;</li>
+<li>спросить у опытных пхпшников, как улучшить мой PHP-код и как померять, что именно тормозит.</li>
+</ul>
+Пример и технические детали под хаброкатом. <habracut/>
 
 Пример программы:
 
-:: (display "Hello, world!\n")
+<code>(<b>display</b> "Hello, world!\n")</code>
 
 Или посложней:
 
-:: (define (сделать-писателя что-писать)
-::   (lambda () (display что-писать)))
-:: (define пиши-привет (сделать-писателя "Привет!\n"))
-:: (пиши-привет)
+<code>
+(<b>define</b> (сделать-писателя что-писать)
+&nbsp;&nbsp;(<b>lambda</b> () (<b>display</b> что-писать)))
+(<b>define</b> пиши-привет (<b>сделать-писателя</b> "Привет!\n"))
+(<b>пиши-привет</b>)</code>
 
 В этом примере функция возвращает функцию. На PHP код выглядел бы так (не работает):
 
-:: function сделать_писателя($что_писать) {
-::   return function () {
-::     print $что_писать;
-::   }
-:: }
-:: $пиши_привет = сделать_писателя("Привет!\n");
-:: $пиши_привет();
+<code><b>function</b> сделать_писателя($что_писать) {
+&nbsp;&nbsp;<b>return</b> <b>function</b> () {
+&nbsp;&nbsp;&nbsp;&nbsp;<b>print</b> $что_писать;
+&nbsp;&nbsp;}
+}
+$пиши_привет = <b>сделать_писателя</b>("Привет!\n");
+$<b>пиши_привет</b>();</code>
 
-На остальные примеры можно посмотреть ___на github___ или ___в архиве___. Тесты проверяют, что работает
+На остальные примеры можно посмотреть <a href="http://github.com/olpa/schemevm/tree/milestone1">на github</a> или <a href="http://github.com/downloads/olpa/schemevm/gambit-php-20110208-milestone1.tar.gz">в архиве</a>. Тесты проверяют, что работает
 
-* хоть что-то (пример "Hello, world")
+* хоть что-то (пример “Hello, world”)
 * рекурсия (факториал, фибоначчи, аккерманн)
 * замыкания
 * продолжения
 
-Все важные вещи работают. До полной реализации стандарта R5RS остаётся только наделать примитивов. Ах да, совершенно случайно мой псевдокод совпадает с языком Scheme R5RS.
+Все важные вещи работают. До полной реализации стандарта R5RS остаётся только наделать примитивов. Ах да, совершенно случайно мой псевдокод совпадает с языком <a href="http://www.schemers.org/">Scheme</a> R5RS.
 
-Для своего проекта я использую компилятор Схемы ___Gambit___. Внутри него — регистрово-стековая виртуальная машина GVM ("___статья___"). Вот, во что превращается наш пример, когда оказывается в GVM:
+Для своего проекта я использую компилятор Схемы <a href="http://dynamo.iro.umontreal.ca/~gambit/">Gambit</a>. Внутри него — регистрово-стековая виртуальная машина GVM (<a href="http://www.iro.umontreal.ca/~feeley/papers/pvm.ps.gz">A Parallel Virtual Machine for Efficient Scheme Compilation</a>). Вот, во что превращается наш пример, когда оказывается в GVM:
 
-; +N регистр номер N
-; -N ячейка N фрейма стека
+<code><i>; +N: регистр номер N
+; -N: ячейка N фрейма стека
 ; Параметры функций: первый в +1, второй в +2 и т.д.
 ; Результат функции возвращается в +1
 ; Используется continuation-passing style, адрес перехода-возврата лежит в +0
-; Здесь и далее, escape-sequence заменены на русские буквы
+; Здесь и далее, escape sequences заменены на русские буквы
 ;
-; Метка #1 плюс всякие полезности
-#1 0 entry-point 0 ()
-  ; Глобальная переменная "сделать-писателя" указывает на функцию
-  |~#сделать-писателя| = '#<procedure |~#сделать-писателя|>
-  -1 = +0
-  +1 = '"Привет!\n"
-  +0 = #3
-  ; Переход на метку #2 плюс всякие полезности
-  jump* 4 #2
-#2 4
-  ; Вызывает функцию. Так как в +0 лежит адрес #3, то туда и вернёмся, а в +1 будет лежать анонимная функция (замыкание)
-  jump$ 4 |~#сделать-писателя| 1
-#3 4 return-point
-  |~#пиши-привет| = +1
-  +0 = -1
-  jump* 4 #4
-#4 4
-  jump$ 0 |~#пиши-привет| 0
+; Метка #1 плюс всякие полезности</i>
+<b>#1</b> 0 entry-point 0 ()
+&nbsp;&nbsp;<i>; Глобальная переменная "сделать-писателя" указывает на функцию</i>
+&nbsp;&nbsp;|~#сделать-писателя| = '#<procedure |~#сделать-писателя|>
+&nbsp;&nbsp;-1 = +0
+&nbsp;&nbsp;+1 = '"Привет!\n"
+&nbsp;&nbsp;+0 = #3
+&nbsp;<i>; Переход на метку #2 плюс всякие полезности</i>
+&nbsp;&nbsp;jump* 4 #2
+<b>#2</b> 4
+&nbsp;&nbsp;<i>; Вызывает функцию. Так как в +0 лежит адрес #3, то туда и вернёмся, а в +1 будет лежать анонимная функция (замыкание)</i>
+&nbsp;&nbsp;jump$ 4 |~#сделать-писателя| 1
+<b>#3</b> 4 return-point
+&nbsp;&nbsp;|~#пиши-привет| = +1
+&nbsp;&nbsp;+0 = -1
+&nbsp;&nbsp;jump* 4 #4
+<b>#4</b> 4
+&nbsp;&nbsp;jump$ 0 |~#пиши-привет| 0
 
 **** #<procedure |~#сделать-писателя|> =
-#1 0 entry-point 1 ()
-  ; Замыкание -- это функцию плюс параметры
-  close -1 = (#2 +1)
-  +1 = -1
-  jump 0 +0
-  ; Начало анонимной функции
-#2 0 closure-entry-point 0 ()
-  ; В +4 лежит замыкание, +4(1) -- первый параметр
-  +1 = +4(1)
-  jump* 0 #3
-#3 0
-  jump$ 0 display 1
+<b>#1</b> 0 entry-point 1 ()
+&nbsp;&nbsp;<i>; Замыкание -- это функция плюс параметры</i>
+&nbsp;&nbsp;close -1 = (#2 +1)
+&nbsp;&nbsp;+1 = -1
+&nbsp;&nbsp;jump 0 +0
+&nbsp;&nbsp;<i>; Начало анонимной функции</i>
+<b>#2</b> 0 closure-entry-point 0 ()
+&nbsp;&nbsp;<i>; В +4 лежит замыкание, +4(1) -- первый параметр</i>
+&nbsp;&nbsp;+1 = +4(1)
+&nbsp;&nbsp;jump* 0 #3
+<b>#3</b> 0
+&nbsp;&nbsp;jump$ 0 display 1
+</code>
 
 Результат трансляции GVM на PHP:
 
-function glo_x20hellowr() {
-  global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
-  $GLOBALS['glo_сделать-писателя'] = 'glo_сделать_писателя';
-  $stack[$fp+1] = $reg0;
-  $reg1 = "Привет!\n";
-  $reg0 = 'lbl_x20hellowr_3';
-  $pc = 'lbl_x20hellowr_2';
-  $fp = $fp+4;
+<code>
+function <b>glo_x20hellowr</b>() {
+&nbsp;&nbsp;global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+&nbsp;&nbsp;$<b>GLOBALS['glo_сделать-писателя']</b> = 'glo_сделать_писателя';
+&nbsp;&nbsp;$<b>stack[$fp+1]</b> = $reg0;
+&nbsp;&nbsp;$<b>reg1</b> = "Привет!\n";
+&nbsp;&nbsp;$<b>reg0</b> = 'lbl_x20hellowr_3';
+&nbsp;&nbsp;$<b>pc</b> = 'lbl_x20hellowr_2';
+&nbsp;&nbsp;$<b>fp</b> = $fp+4;
 }
-function lbl_x20hellowr_2() {
-  global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
-  $nargs = 1;
-  $pc = $GLOBALS['glo_сделать-писателя'];
+function <b>lbl_x20hellowr_2</b>() {
+&nbsp;&nbsp;global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+&nbsp;&nbsp;$nargs = 1;
+&nbsp;&nbsp;$<b>pc</b> = $GLOBALS['glo_сделать-писателя'];
 }
-function lbl_x20hellowr_3() {
-  global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
-  $GLOBALS['glo_пиши-привет'] = $reg1;
-  $reg0 = $stack[$fp-3];
-  $pc = 'lbl_x20hellowr_4';
+function <b>lbl_x20hellowr_3</b>() {
+&nbsp;&nbsp;global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+&nbsp;&nbsp;$<b>GLOBALS['glo_пиши-привет']</b> = $reg1;
+&nbsp;&nbsp;$<b>reg0</b> = $stack[$fp-3];
+&nbsp;&nbsp;$<b>pc</b> = 'lbl_x20hellowr_4';
 }
-function lbl_x20hellowr_4() {
-  global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
-  $nargs = 0;
-  $pc = $GLOBALS['glo_пиши-привет'];
-  $fp = $fp-4;
+function <b>lbl_x20hellowr_4</b>() {
+&nbsp;&nbsp;global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+&nbsp;&nbsp;$nargs = 0;
+&nbsp;&nbsp;$<b>pc</b> = $GLOBALS['glo_пиши-привет'];
+&nbsp;&nbsp;$<b>fp</b> = $fp-4;
 }
-// procedure сделать-писателя =
-function glo_сделать_писателя() {
-  global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
-  $stack[$fp+1] = array('lbl_сделать_писателя_2', $reg1);
-  $reg1 = $stack[$fp+1];
-  $pc = $reg0;
+<i>// procedure сделать-писателя =</i>
+function <b>glo_сделать_писателя</b>() {
+&nbsp;&nbsp;global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+&nbsp;&nbsp;$<b>stack[$fp+1]</b> = array('lbl_сделать_писателя_2', $reg1);
+&nbsp;&nbsp;$<b>reg1</b> = $stack[$fp+1];
+&nbsp;&nbsp;$<b>pc</b> = $reg0;
 }
-function lbl_сделать_писателя_2() {
-  global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
-  $reg1 = $reg4[1];
-  $pc = 'lbl_сделать_писателя_3';
+function <b>lbl_сделать_писателя_2</b>() {
+&nbsp;&nbsp;global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+&nbsp;&nbsp;$<b>reg1</b> = $reg4[1];
+&nbsp;&nbsp;$<b>pc</b> = 'lbl_сделать_писателя_3';
 }
-function lbl_сделать_писателя_3() {
-  global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
-  $nargs = 1;
-  $pc = $GLOBALS['glo_display'];
+function <b>lbl_сделать_писателя_3</b>() {
+&nbsp;&nbsp;global $reg0, $reg1, $reg2, $reg3, $reg4, $pc, $fp, $stack, $nargs;
+&nbsp;&nbsp;$nargs = 1;
+&nbsp;&nbsp;$<b>pc</b> = $GLOBALS['glo_display'];
 }
-exec_scheme_code('glo_x20hellowr');
+exec_scheme_code('<b>glo_x20hellowr</b>');
+</code>
 
-1) Как реализовать goto?
+<h5>1) Как реализовать goto?</h5>
 
 Каждый блок GVM (от метки до перехода) становится функцией PHP, которая возвращает, куда надо goto. Исполнитель программы "exec_scheme_code($pc)" выглядит примерно так:
 
 $reg0 = 'glo_exit';
 while(1) {
-  $pc = $pc()
+&nbsp;&nbsp;$pc = $pc()
 }
 
 Вместо компилятора тут получился интерпретатор. Производительность страдает.
 
 Альтернативы?
 
-
-2) Superglobals
+<h5>2) Superglobals</h5>
 
 В каждой функции приходится перечислять одни и те же глобальные переменные. Может, есть способ сказать PHP, что они глобальные по умолчанию?
 
-3) Стек
+<h5>3) Стек</h5>
 
 Вместо аппаратного стека надо использовать программный. Естественно, я взял массив. И немного не угадал. Оказывается, они всегда ассоциативные, с кучей любопытных побочных эффектов, что тоже замедляет работу.
 
 Как сделать быстрый стек?
 
-4) Производительность
+<h5>4) Производительность</h5>
 
 Естественно, такой PHP-код тормозит. Например, по сравнению с ручной реализацией функции Аккерманна, он в 30 раз медленнее. Я подозреваю, почему (недо-goto и стек), но хочу убедиться.
 
